@@ -13,7 +13,7 @@ export default function HomeScreen() {
         <MaterialCommunityIcons name="archive" size={80} color="white" />
       </View>
 
-      <Text style={globalStyles.title}>School Store</Text>
+      <Text style={globalStyles.title}>RRHS CO-OP</Text>
       <Text style={globalStyles.subtitle}>Inventory Management</Text>
 
       <TouchableOpacity
