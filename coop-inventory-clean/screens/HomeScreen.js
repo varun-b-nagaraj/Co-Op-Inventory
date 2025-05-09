@@ -18,7 +18,7 @@ export default function HomeScreen() {
 
       <TouchableOpacity
         style={globalStyles.buttonPrimary}
-        onPress={() => navigation.navigate('ManualInventory')}
+        onPress={() => navigation.navigate('Manual')}
       >
         <Entypo name="plus" size={20} color="#7a0c0c" />
         <Text style={globalStyles.buttonTextPrimary}> New Inventory Count</Text>
@@ -26,7 +26,7 @@ export default function HomeScreen() {
 
       <TouchableOpacity
         style={globalStyles.buttonSecondary}
-        onPress={() => navigation.navigate('CurrentInventory')}
+        onPress={() => navigation.navigate('Current')}
       >
         <Entypo name="list" size={20} color="#7a0c0c" />
         <Text style={globalStyles.buttonTextSecondary}> View Current Inventory</Text>
@@ -34,7 +34,7 @@ export default function HomeScreen() {
 
       <TouchableOpacity
         style={globalStyles.buttonSecondary}
-        onPress={() => navigation.navigate('AutoInventoryScan')}
+        onPress={() => navigation.navigate('Auto')}
       >
         <MaterialCommunityIcons name="eyedropper-variant" size={20} color="#7a0c0c" />
         <Text style={globalStyles.buttonTextSecondary}> Automatic Color Scan</Text>
