@@ -15,9 +15,9 @@ function TabNavigator() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Auto" component={AutoInventoryScreen} />
       <Tab.Screen name="Manual" component={ManualInventoryScreen} />
       <Tab.Screen name="Current" component={CurrentInventoryScreen} />
-      <Tab.Screen name="Auto" component={AutoInventoryScreen} />
     </Tab.Navigator>
   );
 }
