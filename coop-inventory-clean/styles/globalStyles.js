@@ -123,4 +123,26 @@ export const globalStyles = StyleSheet.create({
     marginLeft: 10,
     fontWeight: '600',
   },
+  searchFloatingWrapper: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    backgroundColor: '#8c1a1a',
+    borderRadius: 30,
+    padding: 12,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+  searchInputFloating: {
+    width: 220,
+    height: 45,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    color: '#333',
+  },
+
 });

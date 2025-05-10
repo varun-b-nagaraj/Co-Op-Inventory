@@ -26,9 +26,10 @@ export default function ManualInventoryScreen() {
             borderRadius: 10,
             padding: 12,
             marginRight: 10,
+            marginTop: 20,
           }}
         />
-        <TouchableOpacity style={{ padding: 10 }}>
+        <TouchableOpacity style={{ padding: 10, marginTop: 20 }}>
           <Ionicons name="camera-outline" size={28} color="white" />
         </TouchableOpacity>
       </View>
