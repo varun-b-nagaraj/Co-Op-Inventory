@@ -14,7 +14,8 @@ export default function HomeScreen() {
       </View>
 
       <Text style={globalStyles.title}>RRHS CO-OP</Text>
-      <Text style={globalStyles.subtitle}>Inventory Management</Text>
+      <Text style={[globalStyles.subtitle, { marginBottom: 30 }]}>Inventory Management</Text>
+
 
       <TouchableOpacity
         style={globalStyles.buttonPrimary}
