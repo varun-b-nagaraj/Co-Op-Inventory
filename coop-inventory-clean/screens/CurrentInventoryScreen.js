@@ -15,37 +15,38 @@ import { globalStyles } from '../styles/globalStyles';
 export default function CurrentInventoryScreen() {
   const inventoryData = [
     { id: '1', sku: '12345', name: 'Hoodie', quantity: 10 },
-    { id: '2', sku: '67890', name: 'Water Bottle', quantity: 5 },
-    { id: '3', sku: '11111', name: 'T-Shirt', quantity: 7 },
-    { id: '4', sku: '22222', name: 'Cap', quantity: 3 },
-    { id: '5', sku: '33333', name: 'Notebook', quantity: 12 },
-    { id: '6', sku: '44444', name: 'Pen', quantity: 20 },
-    { id: '7', sku: '55555', name: 'Pencil', quantity: 15 },
-    { id: '8', sku: '66666', name: 'Eraser', quantity: 8 },
-    { id: '9', sku: '77777', name: 'Ruler', quantity: 6 },
-    { id: '10', sku: '88888', name: 'Stapler', quantity: 4 },
-    { id: '11', sku: '99999', name: 'Tape', quantity: 9 },
-    { id: '12', sku: '10101', name: 'Scissors', quantity: 2 },
-    { id: '13', sku: '12121', name: 'Glue Stick', quantity: 11 },
-    { id: '14', sku: '13131', name: 'Highlighter', quantity: 14 },
-    { id: '15', sku: '14141', name: 'Marker', quantity: 1 },
-    { id: '16', sku: '15151', name: 'Colored Pencils', quantity: 3 },
-    { id: '17', sku: '16161', name: 'Crayons', quantity: 5 },
-    { id: '18', sku: '17171', name: 'Whiteboard Marker', quantity: 7 },
+    { id: '2', sku: '67890', name: 'T-Shirt', quantity: 20 },
+    { id: '3', sku: '54321', name: 'Hat', quantity: 15 },
+    { id: '4', sku: '98765', name: 'Socks', quantity: 30 },
+    { id: '5', sku: '11223', name: 'Jacket', quantity: 5 },
+    { id: '6', sku: '44556', name: 'Shorts', quantity: 12 },
+    { id: '7', sku: '77889', name: 'Pants', quantity: 8 },
+    { id: '8', sku: '99001', name: 'Shoes', quantity: 25 },
+    { id: '9', sku: '22334', name: 'Belt', quantity: 18 },
+    { id: '10', sku: '55667', name: 'Scarf', quantity: 22 },
+    { id: '11', sku: '88990', name: 'Gloves', quantity: 14 },
+    { id: '12', sku: '33445', name: 'Sweater', quantity: 9 },
+    { id: '13', sku: '66778', name: 'Raincoat', quantity: 6 },
+    { id: '14', sku: '99002', name: 'Flip Flops', quantity: 20 },
+    { id: '15', sku: '22335', name: 'Backpack', quantity: 11 },
   ];
 
   const [query, setQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
   const [filteredData, setFilteredData] = useState(inventoryData);
+  const [isOpen, setIsOpen] = useState(false);
 
-  // one Animated.Value per item
-  const animatedValues = useRef(inventoryData.map(() => new Animated.Value(0))).current;
+  // pill expands from 48 → 240
+  const widthAnim = useRef(new Animated.Value(48)).current;
+  // one Animated.Value per list item
+  const itemAnims = useRef(
+    inventoryData.map(() => new Animated.Value(0))
+  ).current;
 
-  // staggered pop-in on mount
+  // stagger pop-in on mount
   useEffect(() => {
     Animated.stagger(
       100,
-      animatedValues.map(av =>
+      itemAnims.map(av =>
         Animated.timing(av, {
           toValue: 1,
           duration: 300,
@@ -55,7 +56,7 @@ export default function CurrentInventoryScreen() {
     ).start();
   }, []);
 
-  // update filter whenever query changes
+  // filter list as user types
   useEffect(() => {
     const q = query.toLowerCase();
     setFilteredData(
@@ -67,8 +68,36 @@ export default function CurrentInventoryScreen() {
     );
   }, [query]);
 
+  // open pill (then show text input)
+  const openSearch = () => {
+    Animated.timing(widthAnim, {
+      toValue: 240,
+      duration: 250,
+      useNativeDriver: false,
+    }).start(() => setIsOpen(true));
+  };
+
+  // close pill (hide input, then collapse)
+  const closeSearch = () => {
+    setIsOpen(false);
+    Animated.timing(widthAnim, {
+      toValue: 48,
+      duration: 250,
+      useNativeDriver: false,
+    }).start(() => {
+      setQuery('');
+      Keyboard.dismiss();
+    });
+  };
+
   return (
-    <View style={[globalStyles.container, globalStyles.inventoryContainer]}>
+    // ANY touch inside this container will fire onTouchStart
+    <View
+      style={[globalStyles.container, globalStyles.inventoryContainer]}
+      onTouchStart={() => {
+        if (isOpen) closeSearch();
+      }}
+    >
       {/* Header */}
       <View style={globalStyles.headerBox}>
         <Text style={[globalStyles.title, globalStyles.textCenter]}>
@@ -79,67 +108,98 @@ export default function CurrentInventoryScreen() {
         </Text>
       </View>
 
-      {/* Animated, scrollable list */}
+      {/* Scrollable, animated list */}
       <View style={styles.listContainer}>
         <FlatList
           data={filteredData}
-          keyExtractor={item => item.id}
-          nestedScrollEnabled
+          keyExtractor={it => it.id}
           showsVerticalScrollIndicator
           contentContainerStyle={globalStyles.inventoryListPadding}
-          renderItem={({ item, index }) => (
-            <Animated.View
-              style={{
-                opacity: animatedValues[index] || 1,
-                transform: [{ scale: animatedValues[index] || 1 }],
-              }}
-            >
-              <View style={globalStyles.itemBox}>
-                <Text style={[globalStyles.itemTitle, { fontSize: 18 }]}>
-                  SKU: {item.sku} | {item.name}
-                </Text>
-                <Text style={[globalStyles.itemSub, { fontSize: 16 }]}>
-                  Quantity: {item.quantity}
-                </Text>
-              </View>
-            </Animated.View>
-          )}
+          style={styles.flatList}
+          renderItem={({ item, index }) => {
+            const anim = itemAnims[index] || new Animated.Value(1);
+            return (
+              <Animated.View
+                style={{
+                  opacity: anim,
+                  transform: [{ scale: anim }],
+                }}
+              >
+                <View style={globalStyles.itemBox}>
+                  <Text style={[globalStyles.itemTitle, { fontSize: 18 }]}>
+                    SKU: {item.sku} | {item.name}
+                  </Text>
+                  <Text style={[globalStyles.itemSub, { fontSize: 16 }]}>
+                    Quantity: {item.quantity}
+                  </Text>
+                </View>
+              </Animated.View>
+            );
+          }}
         />
       </View>
 
-      {/* Floating Search */}
-      <View style={globalStyles.searchFloatingWrapper}>
-        {showSearch ? (
+      {/* Single animated pill → expands then reveals TextInput */}
+      <Animated.View
+        style={[
+          styles.searchContainer,
+          { width: widthAnim },
+        ]}
+      >
+        {isOpen && (
           <TextInput
+            style={styles.searchInput}
             placeholder="Search SKU or name"
-            placeholderTextColor="#999"
+            placeholderTextColor="#ddd"
             value={query}
             onChangeText={setQuery}
-            onBlur={() => {
-              setShowSearch(false);
-              setQuery('');
-              Keyboard.dismiss();
-            }}
-            style={[
-              globalStyles.searchInputFloating,
-              { position: 'absolute', bottom: 7, right: 0 },
-            ]}
+            onBlur={closeSearch}
             autoFocus
           />
-        ) : (
-          <TouchableOpacity onPress={() => setShowSearch(true)}>
-            <Ionicons name="search" size={30} color="white" />
-          </TouchableOpacity>
         )}
-      </View>
+        <TouchableOpacity
+          style={styles.searchIconTouch}
+          onPress={isOpen ? closeSearch : openSearch}
+        >
+          <Ionicons name="search" size={24} color="white" />
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // make this fill remaining space under header
   listContainer: {
+    flex: 1,
     width: '100%',
-    maxHeight: 600,
-    alignSelf: 'center',
+  },
+  // give FlatList itself flex:1 so it can scroll
+  flatList: {
+    flex: 1,
+  },
+  searchContainer: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    height: 48,
+    backgroundColor: '#8A1C1C', // custom maroon
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  searchInput: {
+    flex: 1,
+    color: 'white',
+    marginLeft: 12,
+  },
+  searchIconTouch: {
+    position: 'absolute',
+    right: 0,
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
