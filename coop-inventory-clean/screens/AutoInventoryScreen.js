@@ -4,8 +4,10 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
+  TextInput,
   StyleSheet,
   Alert,
+  Modal,
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { globalStyles } from '../styles/globalStyles';
@@ -15,38 +17,50 @@ export default function AutoInventoryScreen() {
     { id: '1', sku: '98765', name: 'Notebook', quantity: 1 },
     { id: '2', sku: '54321', name: 'Lanyard', quantity: 3 },
     { id: '3', sku: '22222', name: 'Pen', quantity: 5 },
-    { id: '4', sku: '33333', name: 'Pencil', quantity: 2 },
-    { id: '5', sku: '44444', name: 'Eraser', quantity: 4 },
-    { id: '6', sku: '55555', name: 'Sharpener', quantity: 6 },
-    { id: '7', sku: '66666', name: 'Binder', quantity: 8 },
-    { id: '8', sku: '77777', name: 'Folder', quantity: 10 },
-    { id: '9', sku: '88888', name: 'Sticky Notes', quantity: 12 },
-    { id: '10', sku: '99999', name: 'Tape', quantity: 15 },
-    { id: '11', sku: '00000', name: 'Glue', quantity: 20 },
-    { id: '12', sku: '11111', name: 'Scissors', quantity: 25 },
-    { id: '13', sku: '22222', name: 'Highlighter', quantity: 30 },
-    { id: '14', sku: '33333', name: 'Marker', quantity: 35 },
-    { id: '15', sku: '44444', name: 'Ruler', quantity: 40 },
   ]);
+
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [currentEditItem, setCurrentEditItem] = useState(null);
 
   const handleConfirmDeleteAll = () => {
     Alert.alert(
       'Clear Scanned Items?',
-      'This will permanently discard the currently scanned data. Are you sure?',
+      'This will permanently discard all scanned data.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => setScannedItems([]) },
+        { text: 'Delete All', style: 'destructive', onPress: () => setScannedItems([]) },
       ]
     );
   };
 
   const handleDeleteItem = (id) => {
-    setScannedItems((prev) => prev.filter((item) => item.id !== id));
+    Alert.alert(
+      'Delete Item?',
+      'This item will be removed from the scan list.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () =>
+            setScannedItems((prev) => prev.filter((item) => item.id !== id)),
+        },
+      ]
+    );
   };
 
-  const handleEditItem = (id) => {
-    Alert.alert('Edit', `Open edit modal for item with ID ${id}`);
-    // You can open a modal or inline form here later
+  const handleEditItem = (item) => {
+    setCurrentEditItem({ ...item });
+    setEditModalVisible(true);
+  };
+
+  const saveEditItem = () => {
+    setScannedItems((prev) =>
+      prev.map((item) =>
+        item.id === currentEditItem.id ? currentEditItem : item
+      )
+    );
+    setEditModalVisible(false);
   };
 
   const handleUpload = () => {
@@ -70,23 +84,24 @@ export default function AutoInventoryScreen() {
       {/* Scanned Items Box */}
       <View style={styles.scannedBox}>
         <View style={styles.headerRow}>
-          <Text style={globalStyles.itemTitle}>Currently Scanned</Text>
+          <Text style={[globalStyles.itemTitle, { marginBottom: 7 }]}>Currently Scanned</Text>
           <TouchableOpacity onPress={handleConfirmDeleteAll}>
             <Ionicons name="trash-outline" size={20} color="#741414" />
           </TouchableOpacity>
         </View>
+
         <FlatList
           data={scannedItems}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={[globalStyles.itemBox, styles.itemRow]}>
               <View style={{ flex: 1 }}>
-                <Text style={globalStyles.itemTitle}>
+               <Text style={[globalStyles.itemTitle, { fontSize: 18 }]}>
                   SKU: {item.sku} | {item.name}
                 </Text>
                 <Text style={globalStyles.itemSub}>Quantity: {item.quantity}</Text>
               </View>
-              <TouchableOpacity onPress={() => handleEditItem(item.id)} style={styles.iconButton}>
+              <TouchableOpacity onPress={() => handleEditItem(item)} style={styles.iconButton}>
                 <Feather name="edit-3" size={18} color="#741414" />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => handleDeleteItem(item.id)} style={styles.iconButton}>
@@ -105,7 +120,6 @@ export default function AutoInventoryScreen() {
         >
           <Text style={globalStyles.buttonTextSecondary}>Open Camera</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[globalStyles.buttonPrimary, styles.halfButton]}
           onPress={handleUpload}
@@ -113,6 +127,57 @@ export default function AutoInventoryScreen() {
           <Text style={globalStyles.buttonTextPrimary}>Upload</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Edit Modal */}
+      <Modal visible={editModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={globalStyles.title}>Edit Item</Text>
+            <TextInput
+              placeholder="SKU"
+              value={currentEditItem?.sku}
+              onChangeText={(text) =>
+                setCurrentEditItem((prev) => ({ ...prev, sku: text }))
+              }
+              style={styles.modalInput}
+            />
+            <TextInput
+              placeholder="Name"
+              value={currentEditItem?.name}
+              onChangeText={(text) =>
+                setCurrentEditItem((prev) => ({ ...prev, name: text }))
+              }
+              style={styles.modalInput}
+            />
+            <TextInput
+              placeholder="Quantity"
+              value={currentEditItem?.quantity.toString()}
+              keyboardType="numeric"
+              onChangeText={(text) =>
+                setCurrentEditItem((prev) => ({
+                  ...prev,
+                  quantity: parseInt(text) || 0,
+                }))
+              }
+              style={styles.modalInput}
+            />
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity
+                style={[globalStyles.buttonSecondary, { flex: 1, marginRight: 5 }]}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Text style={globalStyles.buttonTextSecondary}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[globalStyles.buttonPrimary, { flex: 1, marginLeft: 5 }]}
+                onPress={saveEditItem}
+              >
+                <Text style={globalStyles.buttonTextPrimary}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -132,11 +197,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: 5,
-  },
+itemRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  padding: 16,
+  marginBottom: 12,
+  borderRadius: 12,
+  backgroundColor: 'white',
+  width: '100%',
+  marginHorizontal: 0, // remove any side margin if applied elsewhere
+},
   iconButton: {
     marginLeft: 8,
     padding: 6,
@@ -148,5 +218,28 @@ const styles = StyleSheet.create({
   },
   halfButton: {
     width: '48%',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    width: '85%',
+  },
+  modalInput: {
+    backgroundColor: '#f3f3f3',
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 8,
+    fontSize: 16,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    marginTop: 10,
   },
 });
