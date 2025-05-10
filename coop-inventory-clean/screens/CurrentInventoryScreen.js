@@ -7,13 +7,15 @@ import {
   TouchableOpacity,
   Keyboard,
   Animated,
+  Modal,
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { globalStyles } from '../styles/globalStyles';
 
 export default function CurrentInventoryScreen() {
-  const inventoryData = [
+  // Inventory stored in state so we can edit/delete
+  const [inventoryData, setInventoryData] = useState([
     { id: '1', sku: '12345', name: 'Hoodie', quantity: 10 },
     { id: '2', sku: '67890', name: 'T-Shirt', quantity: 20 },
     { id: '3', sku: '54321', name: 'Hat', quantity: 15 },
@@ -29,20 +31,26 @@ export default function CurrentInventoryScreen() {
     { id: '13', sku: '66778', name: 'Raincoat', quantity: 6 },
     { id: '14', sku: '99002', name: 'Flip Flops', quantity: 20 },
     { id: '15', sku: '22335', name: 'Backpack', quantity: 11 },
-  ];
+  ]);
 
   const [query, setQuery] = useState('');
   const [filteredData, setFilteredData] = useState(inventoryData);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // pill expands from 48 → 240
+  // For the edit modal
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentEditItem, setCurrentEditItem] = useState(null);
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const modalScale = useRef(new Animated.Value(0.9)).current;
+
+  // Pill animation
   const widthAnim = useRef(new Animated.Value(48)).current;
-  // one Animated.Value per list item
+
+  // Stagger animation for list
   const itemAnims = useRef(
     inventoryData.map(() => new Animated.Value(0))
   ).current;
 
-  // stagger pop-in on mount
   useEffect(() => {
     Animated.stagger(
       100,
@@ -56,7 +64,7 @@ export default function CurrentInventoryScreen() {
     ).start();
   }, []);
 
-  // filter list as user types
+  // Filter list
   useEffect(() => {
     const q = query.toLowerCase();
     setFilteredData(
@@ -66,20 +74,18 @@ export default function CurrentInventoryScreen() {
           it.name.toLowerCase().includes(q)
       )
     );
-  }, [query]);
+  }, [query, inventoryData]);
 
-  // open pill (then show text input)
+  // Open / close search pill
   const openSearch = () => {
     Animated.timing(widthAnim, {
       toValue: 240,
       duration: 250,
       useNativeDriver: false,
-    }).start(() => setIsOpen(true));
+    }).start(() => setIsSearchOpen(true));
   };
-
-  // close pill (hide input, then collapse)
   const closeSearch = () => {
-    setIsOpen(false);
+    setIsSearchOpen(false);
     Animated.timing(widthAnim, {
       toValue: 48,
       duration: 250,
@@ -90,14 +96,61 @@ export default function CurrentInventoryScreen() {
     });
   };
 
+  // Show edit modal
+  const handleEdit = (item) => {
+    setCurrentEditItem({ ...item });
+    setModalVisible(true);
+    Animated.parallel([
+      Animated.timing(overlayOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(modalScale, {
+        toValue: 1,
+        friction: 6,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  // Save changes
+  const handleSave = () => {
+    setInventoryData(prev =>
+      prev.map(i => (i.id === currentEditItem.id ? currentEditItem : i))
+    );
+    closeModal();
+  };
+
+  // Delete item
+  const handleDelete = () => {
+    setInventoryData(prev =>
+      prev.filter(i => i.id !== currentEditItem.id)
+    );
+    closeModal();
+  };
+
+  // Close modal
+  const closeModal = () => {
+    Animated.parallel([
+      Animated.timing(overlayOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(modalScale, {
+        toValue: 0.9,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setModalVisible(false);
+      setCurrentEditItem(null);
+    });
+  };
+
   return (
-    // ANY touch inside this container will fire onTouchStart
-    <View
-      style={[globalStyles.container, globalStyles.inventoryContainer]}
-      onTouchStart={() => {
-        if (isOpen) closeSearch();
-      }}
-    >
+    <View style={[globalStyles.container, globalStyles.inventoryContainer]}>
       {/* Header */}
       <View style={globalStyles.headerBox}>
         <Text style={[globalStyles.title, globalStyles.textCenter]}>
@@ -108,7 +161,7 @@ export default function CurrentInventoryScreen() {
         </Text>
       </View>
 
-      {/* Scrollable, animated list */}
+      {/* Animated, scrollable list */}
       <View style={styles.listContainer}>
         <FlatList
           data={filteredData}
@@ -125,56 +178,102 @@ export default function CurrentInventoryScreen() {
                   transform: [{ scale: anim }],
                 }}
               >
-                <View style={globalStyles.itemBox}>
-                  <Text style={[globalStyles.itemTitle, { fontSize: 18 }]}>
-                    SKU: {item.sku} | {item.name}
-                  </Text>
-                  <Text style={[globalStyles.itemSub, { fontSize: 16 }]}>
-                    Quantity: {item.quantity}
-                  </Text>
-                </View>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => handleEdit(item)}
+                >
+                  <View style={globalStyles.itemBox}>
+                    <Text style={[globalStyles.itemTitle, { fontSize: 18 }]}>
+                      SKU: {item.sku} | {item.name}
+                    </Text>
+                    <Text style={[globalStyles.itemSub, { fontSize: 16 }]}>
+                      Quantity: {item.quantity}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               </Animated.View>
             );
           }}
         />
       </View>
 
-      {/* Single animated pill → expands then reveals TextInput */}
-      <Animated.View
-        style={[
-          styles.searchContainer,
-          { width: widthAnim },
-        ]}
-      >
-        {isOpen && (
+      {/* Search pill */}
+      <Animated.View style={[styles.searchContainer, { width: widthAnim }]}>
+        {isSearchOpen && (
           <TextInput
             style={styles.searchInput}
             placeholder="Search SKU or name"
             placeholderTextColor="#ddd"
             value={query}
             onChangeText={setQuery}
-            onBlur={closeSearch}
             autoFocus
+            onBlur={closeSearch}
           />
         )}
         <TouchableOpacity
           style={styles.searchIconTouch}
-          onPress={isOpen ? closeSearch : openSearch}
+          onPress={isSearchOpen ? closeSearch : openSearch}
         >
           <Ionicons name="search" size={24} color="white" />
         </TouchableOpacity>
       </Animated.View>
+
+      {/* Edit Modal */}
+      <Modal visible={modalVisible} transparent>
+        <Animated.View style={[styles.modalOverlay, { opacity: overlayOpacity }]} />
+        <View style={styles.modalWrapper}>
+          <Animated.View style={[styles.modalContainer, { transform: [{ scale: modalScale }] }]}>
+            <Text style={styles.modalTitle}>Manual Edit</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="SKU"
+              value={currentEditItem?.sku}
+              onChangeText={text => setCurrentEditItem(prev => ({ ...prev, sku: text }))}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Name"
+              value={currentEditItem?.name}
+              onChangeText={text => setCurrentEditItem(prev => ({ ...prev, name: text }))}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Quantity"
+              keyboardType="numeric"
+              value={currentEditItem?.quantity.toString()}
+              onChangeText={text =>
+                setCurrentEditItem(prev => ({
+                  ...prev,
+                  quantity: parseInt(text, 10) || 0,
+                }))
+              }
+            />
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity
+                style={[globalStyles.buttonSecondary, { flex: 1, marginRight: 5 }]}
+                onPress={handleDelete}
+              >
+                <Text style={globalStyles.buttonTextSecondary}>Delete</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[globalStyles.buttonPrimary, { flex: 1, marginLeft: 5 }]}
+                onPress={handleSave}
+              >
+                <Text style={globalStyles.buttonTextPrimary}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  // make this fill remaining space under header
   listContainer: {
     flex: 1,
     width: '100%',
   },
-  // give FlatList itself flex:1 so it can scroll
   flatList: {
     flex: 1,
   },
@@ -183,7 +282,7 @@ const styles = StyleSheet.create({
     bottom: 24,
     right: 20,
     height: 48,
-    backgroundColor: '#8A1C1C', // custom maroon
+    backgroundColor: '#8A1C1C',
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 24,
@@ -201,5 +300,37 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    width: '85%',
+    borderRadius: 12,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalInput: {
+    backgroundColor: '#f3f3f3',
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 8,
+    fontSize: 16,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    marginTop: 12,
   },
 });

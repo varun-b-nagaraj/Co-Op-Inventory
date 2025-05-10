@@ -16,15 +16,6 @@ export default function HomeScreen() {
       <Text style={globalStyles.title}>RRHS CO-OP</Text>
       <Text style={[globalStyles.subtitle, { marginBottom: 30 }]}>Inventory Management</Text>
 
-
-      <TouchableOpacity
-        style={globalStyles.buttonPrimary}
-        onPress={() => navigation.navigate('Manual')}
-      >
-        <Entypo name="plus" size={20} color="#7a0c0c" />
-        <Text style={globalStyles.buttonTextPrimary}> New Inventory Count</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity
         style={globalStyles.buttonSecondary}
         onPress={() => navigation.navigate('Current')}
@@ -36,9 +27,13 @@ export default function HomeScreen() {
       <TouchableOpacity
         style={globalStyles.buttonSecondary}
         onPress={() => navigation.navigate('Auto')}
+        accessible={true}
+        accessibilityLabel="Automatic Inventory Scan"
       >
-        <MaterialCommunityIcons name="eyedropper-variant" size={20} color="#7a0c0c" />
-        <Text style={globalStyles.buttonTextSecondary}> Automatic Color Scan</Text>
+        <MaterialCommunityIcons name="barcode-scan" size={20} color="#7a0c0c" />
+        <Text style={globalStyles.buttonTextSecondary}>
+          Automatic Inventory Scan
+        </Text>
       </TouchableOpacity>
     </View>
   );

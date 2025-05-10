@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import HomeScreen from './screens/HomeScreen';
-import ManualInventoryScreen from './screens/ManualInventoryScreen';
 import CurrentInventoryScreen from './screens/CurrentInventoryScreen';
 import AutoInventoryScreen from './screens/AutoInventoryScreen';
 
@@ -16,7 +15,6 @@ function TabNavigator() {
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Auto" component={AutoInventoryScreen} />
-      <Tab.Screen name="Manual" component={ManualInventoryScreen} />
       <Tab.Screen name="Current" component={CurrentInventoryScreen} />
     </Tab.Navigator>
   );
