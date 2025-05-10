@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 export const globalStyles = StyleSheet.create({
+  // Layout & Wrappers
   container: {
     flex: 1,
     backgroundColor: '#7a0c0c',
@@ -8,12 +9,27 @@ export const globalStyles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  iconWrapper: {
-    backgroundColor: '#8c1a1a',
-    borderRadius: 100,
-    padding: 30,
-    marginBottom: 30,
+  inventoryContainer: {
+    justifyContent: 'flex-start',
+    paddingTop: 100,
   },
+  headerBox: {
+    backgroundColor: '#8c1a1a',
+    borderRadius: 15,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    marginBottom: 30,
+    width: '90%',
+    alignItems: 'center',
+  },
+  fullWidth: {
+    width: '100%',
+  },
+  inventoryListPadding: {
+    paddingBottom: 20,
+  },
+
+  // Typography
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -23,8 +39,56 @@ export const globalStyles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: 'white',
-    marginBottom: 40,
+    marginBottom: 0,
   },
+  textCenter: {
+    textAlign: 'center',
+  },
+
+  // Inventory Items
+  itemBox: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 16,
+    marginHorizontal: 20,
+    marginBottom: 15,
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#741414',
+  },
+  itemSub: {
+    fontSize: 14,
+    color: '#444',
+  },
+
+  // Search
+  searchWrapper: {
+    width: '90%',
+    position: 'absolute',
+    bottom: 20,
+    right: 0,
+    alignSelf: 'flex-end',
+  },
+  searchInput: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    fontSize: 14,
+    color: '#333',
+  },
+
+  // Icons
+  iconWrapper: {
+    backgroundColor: '#8c1a1a',
+    borderRadius: 100,
+    padding: 30,
+    marginBottom: 30,
+  },
+
+  // Buttons
   buttonPrimary: {
     flexDirection: 'row',
     backgroundColor: 'white',
