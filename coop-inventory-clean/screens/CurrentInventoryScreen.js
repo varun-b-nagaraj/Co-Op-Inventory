@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { globalStyles } from '../styles/globalStyles';
+import { InventoryContext } from '../context/InventoryContext';
+
 
 export default function CurrentInventoryScreen() {
   // Inventory stored in state so we can edit/delete
@@ -36,6 +38,7 @@ export default function CurrentInventoryScreen() {
   const [query, setQuery] = useState('');
   const [filteredData, setFilteredData] = useState(inventoryData);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { inventory } = useContext(InventoryContext);
 
   // For the edit modal
   const [modalVisible, setModalVisible] = useState(false);
@@ -149,124 +152,124 @@ export default function CurrentInventoryScreen() {
     });
   };
 
-  return (
-    <View style={[globalStyles.container, globalStyles.inventoryContainer]}>
-      {/* Header */}
-      <View style={globalStyles.headerBox}>
-        <Text style={[globalStyles.title, globalStyles.textCenter]}>
-          Current Inventory
-        </Text>
-        <Text style={[globalStyles.subtitle, globalStyles.textCenter]}>
-          View all items in stock
-        </Text>
-      </View>
-
-      {/* Animated, scrollable list */}
-      <View style={styles.listContainer}>
-        <FlatList
-          data={filteredData}
-          keyExtractor={it => it.id}
-          showsVerticalScrollIndicator
-          contentContainerStyle={globalStyles.inventoryListPadding}
-          style={styles.flatList}
-          renderItem={({ item, index }) => {
-            const anim = itemAnims[index] || new Animated.Value(1);
-            return (
-              <Animated.View
-                style={{
-                  opacity: anim,
-                  transform: [{ scale: anim }],
-                }}
-              >
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => handleEdit(item)}
-                >
-                  <View style={globalStyles.itemBox}>
-                    <Text style={[globalStyles.itemTitle, { fontSize: 18 }]}>
-                      SKU: {item.sku} | {item.name}
-                    </Text>
-                    <Text style={[globalStyles.itemSub, { fontSize: 16 }]}>
-                      Quantity: {item.quantity}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            );
-          }}
-        />
-      </View>
-
-      {/* Search pill */}
-      <Animated.View style={[styles.searchContainer, { width: widthAnim }]}>
-        {isSearchOpen && (
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search SKU or name"
-            placeholderTextColor="#ddd"
-            value={query}
-            onChangeText={setQuery}
-            autoFocus
-            onBlur={closeSearch}
-          />
-        )}
-        <TouchableOpacity
-          style={styles.searchIconTouch}
-          onPress={isSearchOpen ? closeSearch : openSearch}
-        >
-          <Ionicons name="search" size={24} color="white" />
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* Edit Modal */}
-      <Modal visible={modalVisible} transparent>
-        <Animated.View style={[styles.modalOverlay, { opacity: overlayOpacity }]} />
-        <View style={styles.modalWrapper}>
-          <Animated.View style={[styles.modalContainer, { transform: [{ scale: modalScale }] }]}>
-            <Text style={styles.modalTitle}>Manual Edit</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="SKU"
-              value={currentEditItem?.sku}
-              onChangeText={text => setCurrentEditItem(prev => ({ ...prev, sku: text }))}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Name"
-              value={currentEditItem?.name}
-              onChangeText={text => setCurrentEditItem(prev => ({ ...prev, name: text }))}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Quantity"
-              keyboardType="numeric"
-              value={currentEditItem?.quantity.toString()}
-              onChangeText={text =>
-                setCurrentEditItem(prev => ({
-                  ...prev,
-                  quantity: parseInt(text, 10) || 0,
-                }))
-              }
-            />
-            <View style={styles.modalButtonRow}>
-              <TouchableOpacity
-                style={[globalStyles.buttonSecondary, { flex: 1, marginRight: 5 }]}
-                onPress={handleDelete}
-              >
-                <Text style={globalStyles.buttonTextSecondary}>Delete</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[globalStyles.buttonPrimary, { flex: 1, marginLeft: 5 }]}
-                onPress={handleSave}
-              >
-                <Text style={globalStyles.buttonTextPrimary}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </View>
-      </Modal>
+return (
+  <View style={[globalStyles.container, globalStyles.inventoryContainer]}>
+    {/* Header */}
+    <View style={globalStyles.headerBox}>
+      <Text style={[globalStyles.title, globalStyles.textCenter]}>
+        Current Inventory
+      </Text>
+      <Text style={[globalStyles.subtitle, globalStyles.textCenter]}>
+        View all items in stock
+      </Text>
     </View>
-  );
+
+    {/* Animated, scrollable list */}
+    <View style={styles.listContainer}>
+      <FlatList
+        data={filteredData}
+        keyExtractor={it => it.id}
+        showsVerticalScrollIndicator
+        contentContainerStyle={globalStyles.inventoryListPadding}
+        style={styles.flatList}
+        renderItem={({ item, index }) => {
+          const anim = itemAnims[index] || new Animated.Value(1);
+          return (
+            <Animated.View
+              style={{
+                opacity: anim,
+                transform: [{ scale: anim }],
+              }}
+            >
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => handleEdit(item)}
+              >
+                <View style={globalStyles.itemBox}>
+                  <Text style={[globalStyles.itemTitle, { fontSize: 18 }]}>
+                    SKU: {item.sku} | {item.name}
+                  </Text>
+                  <Text style={[globalStyles.itemSub, { fontSize: 16 }]}>
+                    Quantity: {item.quantity}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          );
+        }}
+      />
+    </View>
+
+    {/* Search pill */}
+    <Animated.View style={[styles.searchContainer, { width: widthAnim }]}>
+      {isSearchOpen && (
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search SKU or name"
+          placeholderTextColor="#ddd"
+          value={query}
+          onChangeText={setQuery}
+          autoFocus
+          onBlur={closeSearch}
+        />
+      )}
+      <TouchableOpacity
+        style={styles.searchIconTouch}
+        onPress={isSearchOpen ? closeSearch : openSearch}
+      >
+        <Ionicons name="search" size={24} color="white" />
+      </TouchableOpacity>
+    </Animated.View>
+
+    {/* Edit Modal */}
+    <Modal visible={modalVisible} transparent>
+      <Animated.View style={[styles.modalOverlay, { opacity: overlayOpacity }]} />
+      <View style={styles.modalWrapper}>
+        <Animated.View style={[styles.modalContainer, { transform: [{ scale: modalScale }] }]}>
+          <Text style={styles.modalTitle}>Manual Edit</Text>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="SKU"
+            value={currentEditItem?.sku}
+            onChangeText={text => setCurrentEditItem(prev => ({ ...prev, sku: text }))}
+          />
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Name"
+            value={currentEditItem?.name}
+            onChangeText={text => setCurrentEditItem(prev => ({ ...prev, name: text }))}
+          />
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Quantity"
+            keyboardType="numeric"
+            value={currentEditItem?.quantity.toString()}
+            onChangeText={text =>
+              setCurrentEditItem(prev => ({
+                ...prev,
+                quantity: parseInt(text, 10) || 0,
+              }))
+            }
+          />
+          <View style={styles.modalButtonRow}>
+            <TouchableOpacity
+              style={[globalStyles.buttonSecondary, { flex: 1, marginRight: 5 }]}
+              onPress={handleDelete}
+            >
+              <Text style={globalStyles.buttonTextSecondary}>Delete</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[globalStyles.buttonPrimary, { flex: 1, marginLeft: 5 }]}
+              onPress={handleSave}
+            >
+              <Text style={globalStyles.buttonTextPrimary}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </View>
+    </Modal>
+  </View>
+);
 }
 
 const styles = StyleSheet.create({

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { globalStyles } from '../styles/globalStyles';
+import { InventoryContext } from '../context/InventoryContext';
+import { useNavigation } from '@react-navigation/native';
 
 export default function AutoInventoryScreen() {
   const [scannedItems, setScannedItems] = useState([
@@ -32,11 +34,11 @@ export default function AutoInventoryScreen() {
     { id: '14', sku: '14141', name: 'Crayons', quantity: 4 },
     { id: '15', sku: '15151', name: 'Whiteboard Marker', quantity: 1 },
   ]);
-
+  const { inventory, setInventory } = useContext(InventoryContext);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [currentEditItem, setCurrentEditItem] = useState(null);
   const [animatedValues, setAnimatedValues] = useState([]);
-  
+  const navigation = useNavigation();
   // Animation values for screen elements
   const headerAnimation = useRef(new Animated.Value(0)).current;
   const scannedBoxAnimation = useRef(new Animated.Value(0)).current;
@@ -88,6 +90,34 @@ export default function AutoInventoryScreen() {
     Animated.stagger(30, animations).start();
   }, []);
 
+  const handleUpload = () => {
+   Alert.alert(
+     'Sync to Current Inventory?',
+     'This will merge all scanned items into your current inventory.',
+     [
+       { text: 'Cancel', style: 'cancel' },
+       {
+         text: 'Confirm',
+         onPress: () => {
+           // do the merge
+           const merged = [...inventory];
+           scannedItems.forEach(sc => {
+             const idx = merged.findIndex(
+               item => item.sku === sc.sku || item.name === sc.name
+             );
+             if (idx >= 0) {
+               merged[idx].quantity += sc.quantity;
+             } else {
+               merged.push({ ...sc });
+             }
+           });
+           setInventory(merged);
+           navigation.navigate('Current');
+         }
+       }
+     ]
+   );
+};
   const handleConfirmDeleteAll = () => {
     Alert.alert(
       'Clear Scanned Items?',
@@ -216,9 +246,7 @@ export default function AutoInventoryScreen() {
     console.log('Open Camera');
   };
 
-  const handleUpload = () => {
-    console.log('Upload Scanned Items');
-  };
+
 
   return (
     <View style={[globalStyles.container, globalStyles.inventoryContainer]}>

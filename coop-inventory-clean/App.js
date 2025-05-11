@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { InventoryProvider } from './context/InventoryContext';
 
 import HomeScreen from './screens/HomeScreen';
 import AutoInventoryScreen from './screens/AutoInventoryScreen';
@@ -40,8 +41,10 @@ function TabNavigator() {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <TabNavigator />
-    </NavigationContainer>
+    <InventoryProvider>
+      <NavigationContainer>
+        <TabNavigator />
+      </NavigationContainer>
+    </InventoryProvider>
   );
 }
