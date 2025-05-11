@@ -36,21 +36,56 @@ export default function AutoInventoryScreen() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [currentEditItem, setCurrentEditItem] = useState(null);
   const [animatedValues, setAnimatedValues] = useState([]);
-
+  
+  // Animation values for screen elements
+  const headerAnimation = useRef(new Animated.Value(0)).current;
+  const scannedBoxAnimation = useRef(new Animated.Value(0)).current;
+  const buttonsAnimation = useRef(new Animated.Value(0)).current;
+  
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const modalScale = useRef(new Animated.Value(0.9)).current;
+
+  // Initial screen animations on mount
+  useEffect(() => {
+    const animationSequence = Animated.stagger(150, [
+      Animated.spring(headerAnimation, {
+        toValue: 1,
+        friction: 6,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scannedBoxAnimation, {
+        toValue: 1,
+        friction: 7,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+      Animated.spring(buttonsAnimation, {
+        toValue: 1,
+        friction: 7,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+    ]);
+    
+    animationSequence.start();
+  }, []);
 
   useEffect(() => {
     const values = scannedItems.map(() => new Animated.Value(0));
     setAnimatedValues(values);
-    values.forEach((anim, index) => {
+    
+    // Stagger the list item animations
+    const animations = values.map((anim, index) => 
       Animated.timing(anim, {
         toValue: 1,
         duration: 300,
-        delay: index * 100,
+        delay: index * 50, // Reduced delay for faster overall animation
         useNativeDriver: true,
-      }).start();
-    });
+      })
+    );
+    
+    Animated.stagger(30, animations).start();
   }, []);
 
   const handleConfirmDeleteAll = () => {
@@ -126,11 +161,11 @@ export default function AutoInventoryScreen() {
 
     return (
       <Pressable
-        onPressIn={() => Animated.spring(scale, { toValue: 1.1, useNativeDriver: true }).start()}
+        onPressIn={() => Animated.spring(scale, { toValue: 0.95, friction: 5, useNativeDriver: true }).start()}
         onPressOut={() => {
           Animated.sequence([
-            Animated.spring(scale, { toValue: 0.95, useNativeDriver: true }),
-            Animated.spring(scale, { toValue: 1, useNativeDriver: true })
+            Animated.spring(scale, { toValue: 1.05, friction: 3, useNativeDriver: true }),
+            Animated.spring(scale, { toValue: 1, friction: 5, useNativeDriver: true })
           ]).start(() => onPress());
         }}
       >
@@ -138,6 +173,42 @@ export default function AutoInventoryScreen() {
           {children}
         </Animated.View>
       </Pressable>
+    );
+  };
+
+  const AnimatedIconButton = ({ icon, color, onPress, style }) => {
+    const rotateAnim = useRef(new Animated.Value(0)).current;
+    
+    const handlePress = () => {
+      Animated.sequence([
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        })
+      ]).start(() => onPress());
+    };
+    
+    const rotate = rotateAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '20deg']
+    });
+    
+    return (
+      <TouchableOpacity onPress={handlePress} style={style}>
+        <Animated.View style={{ transform: [{ rotate }] }}>
+          {icon === 'edit' ? (
+            <Feather name="edit-3" size={18} color={color} />
+          ) : (
+            <Ionicons name="trash-outline" size={18} color={color} />
+          )}
+        </Animated.View>
+      </TouchableOpacity>
     );
   };
 
@@ -151,17 +222,48 @@ export default function AutoInventoryScreen() {
 
   return (
     <View style={[globalStyles.container, globalStyles.inventoryContainer]}>
-      <View style={globalStyles.headerBox}>
+      <Animated.View 
+        style={[
+          globalStyles.headerBox, 
+          { 
+            opacity: headerAnimation,
+            transform: [
+              { translateY: headerAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-50, 0]
+              })},
+              { scale: headerAnimation }
+            ] 
+          }
+        ]}
+      >
         <Text style={[globalStyles.title, globalStyles.textCenter]}>Auto Scan</Text>
         <Text style={[globalStyles.subtitle, globalStyles.textCenter]}>Scan items continuously</Text>
-      </View>
+      </Animated.View>
 
-      <View style={styles.scannedBox}>
+      <Animated.View 
+        style={[
+          styles.scannedBox, 
+          { 
+            opacity: scannedBoxAnimation,
+            transform: [
+              { translateY: scannedBoxAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [50, 0]
+              })},
+              { scale: scannedBoxAnimation }
+            ] 
+          }
+        ]}
+      >
         <View style={styles.headerRow}>
           <Text style={[globalStyles.itemTitle, { marginBottom: 7 }]}>Currently Scanned</Text>
-          <TouchableOpacity onPress={handleConfirmDeleteAll}>
-            <Ionicons name="trash-outline" size={20} color="#741414" />
-          </TouchableOpacity>
+          <AnimatedIconButton 
+            icon="trash" 
+            color="#741414" 
+            onPress={handleConfirmDeleteAll} 
+            style={styles.iconButton}
+          />
         </View>
 
         <FlatList
@@ -170,38 +272,76 @@ export default function AutoInventoryScreen() {
           renderItem={({ item, index }) => (
             <Animated.View style={{
               opacity: animatedValues[index] || new Animated.Value(1),
-              transform: [{ scale: animatedValues[index] || new Animated.Value(1) }],
+              transform: [
+                { scale: animatedValues[index] || new Animated.Value(1) },
+                { translateX: animatedValues[index]?.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [50, 0]
+                  }) || 0 }
+              ],
             }}>
               <View style={[globalStyles.itemBox, styles.itemRow]}>
                 <View style={{ flex: 1 }}>
                   <Text style={[globalStyles.itemTitle, { fontSize: 18 }]}>SKU: {item.sku} | {item.name}</Text>
                   <Text style={globalStyles.itemSub}>Quantity: {item.quantity}</Text>
                 </View>
-                <TouchableOpacity onPress={() => handleEditItem(item)} style={styles.iconButton}>
-                  <Feather name="edit-3" size={18} color="#741414" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeleteItem(item.id)} style={styles.iconButton}>
-                  <Ionicons name="trash-outline" size={18} color="#741414" />
-                </TouchableOpacity>
+                <AnimatedIconButton 
+                  icon="edit" 
+                  color="#741414" 
+                  onPress={() => handleEditItem(item)} 
+                  style={styles.iconButton}
+                />
+                <AnimatedIconButton 
+                  icon="trash" 
+                  color="#741414" 
+                  onPress={() => handleDeleteItem(item.id)} 
+                  style={styles.iconButton}
+                />
               </View>
             </Animated.View>
           )}
         />
-      </View>
+      </Animated.View>
 
-      <View style={styles.buttonRow}>
+      <Animated.View 
+        style={[
+          styles.buttonRow, 
+          { 
+            opacity: buttonsAnimation,
+            transform: [
+              { translateY: buttonsAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [100, 0]
+              })}
+            ] 
+          }
+        ]}
+      >
         <BouncePressable onPress={handleOpenCamera} style={[globalStyles.buttonSecondary, styles.halfButton]}>
           <Text style={globalStyles.buttonTextSecondary}>Open Camera</Text>
         </BouncePressable>
         <BouncePressable onPress={handleUpload} style={[globalStyles.buttonPrimary, styles.halfButton]}>
           <Text style={globalStyles.buttonTextPrimary}>Upload</Text>
         </BouncePressable>
-      </View>
+      </Animated.View>
 
       <Modal visible={editModalVisible} transparent>
         <Animated.View style={[styles.modalOverlay, { opacity: overlayOpacity }]} />
         <View style={styles.modalOverlayWrapper}>
-          <Animated.View style={[styles.modalContainer, { transform: [{ scale: modalScale }] }]}>
+          <Animated.View 
+            style={[
+              styles.modalContainer, 
+              { 
+                transform: [
+                  { scale: modalScale },
+                  { translateY: modalScale.interpolate({
+                      inputRange: [0.9, 1],
+                      outputRange: [30, 0]
+                  })}
+                ] 
+              }
+            ]}
+          >
             <Text style={globalStyles.title}>Edit Item</Text>
             <TextInput
               placeholder="SKU"
@@ -266,22 +406,20 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     padding: 6,
   },
-buttonRow: {
-  position: 'absolute',
-  bottom: 24,
-  left: 17,
-  right: 20,
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  width: '80%',
-},
+  buttonRow: {
+    position: 'absolute',
+    bottom: 24,
+    left: 17,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '80%',
+  },
   halfButton: {
-  width: '80%',
-  marginHorizontal: 10,
-},
-  
-
+    width: '80%',
+    marginHorizontal: 10,
+  },
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.5)',
