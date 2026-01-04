@@ -39,6 +39,11 @@ export default function AutoInventoryScreen() {
   const [currentEditItem, setCurrentEditItem] = useState(null);
   const [animatedValues, setAnimatedValues] = useState([]);
   const navigation = useNavigation();
+  const uploadTapCountRef = useRef(0);
+  const uploadTapTimerRef = useRef(null);
+  const uploadTapResetTimerRef = useRef(null);
+  const UPLOAD_DOUBLE_TAP_MS = 500;
+  const UPLOAD_TAP_RESET_MS = 1200;
   // Animation values for screen elements
   const headerAnimation = useRef(new Animated.Value(0)).current;
   const scannedBoxAnimation = useRef(new Animated.Value(0)).current;
@@ -74,6 +79,35 @@ export default function AutoInventoryScreen() {
   }, []);
 
   useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      uploadTapCountRef.current = 0;
+      if (uploadTapTimerRef.current) {
+        clearTimeout(uploadTapTimerRef.current);
+        uploadTapTimerRef.current = null;
+      }
+      if (uploadTapResetTimerRef.current) {
+        clearTimeout(uploadTapResetTimerRef.current);
+        uploadTapResetTimerRef.current = null;
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
+    return () => {
+      if (uploadTapTimerRef.current) {
+        clearTimeout(uploadTapTimerRef.current);
+        uploadTapTimerRef.current = null;
+      }
+      if (uploadTapResetTimerRef.current) {
+        clearTimeout(uploadTapResetTimerRef.current);
+        uploadTapResetTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     const values = scannedItems.map(() => new Animated.Value(0));
     setAnimatedValues(values);
     
@@ -91,33 +125,71 @@ export default function AutoInventoryScreen() {
   }, []);
 
   const handleUpload = () => {
-   Alert.alert(
-     'Sync to Current Inventory?',
-     'This will merge all scanned items into your current inventory.',
-     [
-       { text: 'Cancel', style: 'cancel' },
-       {
-         text: 'Confirm',
-         onPress: () => {
-           // do the merge
-           const merged = [...inventory];
-           scannedItems.forEach(sc => {
-             const idx = merged.findIndex(
-               item => item.sku === sc.sku || item.name === sc.name
-             );
-             if (idx >= 0) {
-               merged[idx].quantity += sc.quantity;
-             } else {
-               merged.push({ ...sc });
-             }
-           });
-           setInventory(merged);
-           navigation.navigate('Current');
-         }
-       }
-     ]
-   );
-};
+    Alert.alert(
+      'Sync to Current Inventory?',
+      'This will merge all scanned items into your current inventory.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm',
+          onPress: () => {
+            // do the merge
+            const merged = [...inventory];
+            scannedItems.forEach(sc => {
+              const idx = merged.findIndex(
+                item => item.sku === sc.sku || item.name === sc.name
+              );
+              if (idx >= 0) {
+                merged[idx].quantity += sc.quantity;
+              } else {
+                merged.push({ ...sc });
+              }
+            });
+            setInventory(merged);
+            navigation.navigate('Current');
+          }
+        }
+      ]
+    );
+  };
+
+  const handleUploadPress = () => {
+    uploadTapCountRef.current += 1;
+
+    if (uploadTapResetTimerRef.current) {
+      clearTimeout(uploadTapResetTimerRef.current);
+    }
+    uploadTapResetTimerRef.current = setTimeout(() => {
+      uploadTapCountRef.current = 0;
+      uploadTapResetTimerRef.current = null;
+    }, UPLOAD_TAP_RESET_MS);
+
+    if (uploadTapCountRef.current >= 5) {
+      uploadTapCountRef.current = 0;
+      if (uploadTapTimerRef.current) {
+        clearTimeout(uploadTapTimerRef.current);
+        uploadTapTimerRef.current = null;
+      }
+      if (uploadTapResetTimerRef.current) {
+        clearTimeout(uploadTapResetTimerRef.current);
+        uploadTapResetTimerRef.current = null;
+      }
+      navigation.navigate('DebugMenu');
+      return;
+    }
+
+    if (uploadTapTimerRef.current) {
+      clearTimeout(uploadTapTimerRef.current);
+      uploadTapTimerRef.current = null;
+      return;
+    }
+
+    uploadTapTimerRef.current = setTimeout(() => {
+      uploadTapTimerRef.current = null;
+      uploadTapCountRef.current = 0;
+      handleUpload();
+    }, UPLOAD_DOUBLE_TAP_MS);
+  };
   const handleConfirmDeleteAll = () => {
     Alert.alert(
       'Clear Scanned Items?',
@@ -348,7 +420,7 @@ export default function AutoInventoryScreen() {
         <BouncePressable onPress={handleOpenCamera} style={[globalStyles.buttonSecondary, styles.halfButton]}>
           <Text style={globalStyles.buttonTextSecondary}>Open Camera</Text>
         </BouncePressable>
-        <BouncePressable onPress={handleUpload} style={[globalStyles.buttonPrimary, styles.halfButton]}>
+        <BouncePressable onPress={handleUploadPress} style={[globalStyles.buttonPrimary, styles.halfButton]}>
           <Text style={globalStyles.buttonTextPrimary}>Upload</Text>
         </BouncePressable>
       </Animated.View>
@@ -412,7 +484,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 16,
     marginBottom: 30,
-    maxHeight: 500,
+    maxHeight: 450,
   },
   headerRow: {
     flexDirection: 'row',

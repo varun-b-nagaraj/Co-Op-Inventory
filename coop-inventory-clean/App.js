@@ -7,6 +7,7 @@ import { InventoryProvider } from './context/InventoryContext';
 import HomeScreen from './screens/HomeScreen';
 import AutoInventoryScreen from './screens/AutoInventoryScreen';
 import CurrentInventoryScreen from './screens/CurrentInventoryScreen';
+import DebugMenuScreen from './screens/DebugMenuScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -27,6 +28,8 @@ function TabNavigator() {
             iconName = 'camera-outline';
           } else if (route.name === 'Current') {
             iconName = 'list-outline';
+          } else {
+            return null;
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -35,6 +38,15 @@ function TabNavigator() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Auto" component={AutoInventoryScreen} />
       <Tab.Screen name="Current" component={CurrentInventoryScreen} />
+      <Tab.Screen
+        name="DebugMenu"
+        component={DebugMenuScreen}
+        options={{
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
+          tabBarStyle: { display: 'none' },
+        }}
+      />
     </Tab.Navigator>
   );
 }

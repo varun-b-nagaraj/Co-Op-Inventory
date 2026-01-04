@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.coop-inventory-clean"
+      "bundleIdentifier": "com.anonymous.coop-inventory-clean",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +30,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-asset"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7471a14c-b897-4cf0-aea6-21900348cc5d"
+      }
+    },
+    "owner": "varun_b_nagaraj"
   }
 }
